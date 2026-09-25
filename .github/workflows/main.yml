@@ -33,7 +33,7 @@ jobs:
           mkdir -p app/src/main/res/values
 
           cp index.html app/src/main/assets/site/
-          cp App.js app/src/main/assets/site/
+          cp app.js app/src/main/assets/site/
           cp styles.css app/src/main/assets/site/
           cp manifest.webmanifest app/src/main/assets/site/
           cp sw.js app/src/main/assets/site/
