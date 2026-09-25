@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get website files
+      - name: Checkout project
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -20,30 +20,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK
-        run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Create Android project
+        shell: bash
         run: |
           mkdir -p app/src/main/java/com/twobilliondollarmusic/app
           mkdir -p app/src/main/assets/site
-          mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/values
 
           cp index.html app/src/main/assets/site/
+          cp App.js app/src/main/assets/site/
           cp styles.css app/src/main/assets/site/
-          cp app.js app/src/main/assets/site/
           cp manifest.webmanifest app/src/main/assets/site/
-          cp sw.js app/src/main/assets/site/ || true
+          cp sw.js app/src/main/assets/site/
+          cp icon-192.svg app/src/main/assets/site/
+          cp Readme.md app/src/main/assets/site/ || true
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -63,12 +58,12 @@ jobs:
           }
 
           rootProject.name = "2BillionDollarMusic"
-          include ":app"
+          include(":app")
           EOF
 
           cat > build.gradle <<'EOF'
           plugins {
-              id 'com.android.application' version '8.7.3' apply false
+              id "com.android.application" version "8.7.3" apply false
           }
           EOF
 
@@ -79,21 +74,33 @@ jobs:
 
           cat > app/build.gradle <<'EOF'
           plugins {
-              id 'com.android.application'
+              id "com.android.application"
           }
 
           android {
-              namespace 'com.twobilliondollarmusic.app'
+              namespace "com.twobilliondollarmusic.app"
               compileSdk 35
 
               defaultConfig {
-                  applicationId 'com.twobilliondollarmusic.app'
+                  applicationId "com.twobilliondollarmusic.app"
                   minSdk 23
                   targetSdk 35
                   versionCode 1
-                  versionName '1.0'
+                  versionName "1.0"
               }
           }
+          EOF
+
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme"
+                  parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:colorAccent">#D4AF37</item>
+                  <item name="android:statusBarColor">#080808</item>
+                  <item name="android:navigationBarColor">#080808</item>
+              </style>
+          </resources>
           EOF
 
           cat > app/src/main/AndroidManifest.xml <<'EOF'
@@ -108,8 +115,8 @@ jobs:
 
                   <activity
                       android:name=".MainActivity"
-                      android:screenOrientation="portrait"
-                      android:exported="true">
+                      android:exported="true"
+                      android:screenOrientation="portrait">
 
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
@@ -121,18 +128,6 @@ jobs:
               </application>
 
           </manifest>
-          EOF
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <resources>
-              <style name="AppTheme"
-                  parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#D4AF37</item>
-                  <item name="android:statusBarColor">#080808</item>
-                  <item name="android:navigationBarColor">#080808</item>
-              </style>
-          </resources>
           EOF
 
           cat > app/src/main/java/com/twobilliondollarmusic/app/MainActivity.java <<'EOF'
@@ -158,6 +153,8 @@ jobs:
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setMediaPlaybackRequiresUserGesture(false);
+                  settings.setAllowFileAccess(true);
+                  settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(new WebViewClient());
 
